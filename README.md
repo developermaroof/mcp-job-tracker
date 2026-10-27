@@ -34,7 +34,7 @@ The possible statuses are `applied`, `replied`, `interview`, `rejected` and `off
 ## Install and build
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/mcp-job-tracker.git
+git clone https://github.com/developermaroof/mcp-job-tracker.git
 cd mcp-job-tracker
 npm install
 npm run build
@@ -106,6 +106,10 @@ mcp-job-tracker/
   tsconfig.json         TypeScript compiler settings
   README.md
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ---
 
