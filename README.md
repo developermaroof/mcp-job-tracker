@@ -1,5 +1,7 @@
 # mcp-job-tracker
 
+[![CI](https://github.com/developermaroof/mcp-job-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/developermaroof/mcp-job-tracker/actions/workflows/ci.yml)
+
 An MCP server that lets Claude track your job applications. You tell Claude about an application, and it saves it in a local JSON file on your computer. You can then list your applications, update their status and see which ones need a follow-up. There is no database and no account to set up.
 
 ## Tools
@@ -95,17 +97,33 @@ If the tools do not show up, check the log files in `%APPDATA%\Claude\logs` on W
 
 ```
 mcp-job-tracker/
+  .github/
+    workflows/
+      ci.yml            GitHub Actions: build and test on every push and pull request
   src/
     index.ts            Server code: storage helpers and the 4 tools
+    lib.ts              Pure helpers: date check, follow-up filter, newest-first sorting
+    lib.test.ts         Vitest tests for lib.ts (not included in the build)
   build/                Compiled JavaScript, created by npm run build (not in git)
   data/
     applications.json   Your saved applications, created on first use (not in git)
   .gitignore
-  package.json          Dependencies and the build script
+  LICENSE               MIT license
+  package.json          Dependencies and the build and test scripts
   package-lock.json     Exact dependency versions
   tsconfig.json         TypeScript compiler settings
   README.md
 ```
+
+## Development
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+`npm test` runs the Vitest tests in `src/lib.test.ts` once. Running the tests needs Node.js 22.12 or newer (required by Vitest). GitHub Actions runs the build and the tests on Node.js 22 and 24 for every push and pull request to `main`.
 
 ## License
 

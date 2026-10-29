@@ -4,26 +4,20 @@ import { z } from "zod";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  type Application,
+  appliedDateSchema,
+  daysSince,
+  followupsDue,
+  newestFirst,
+  STATUSES,
+} from "./lib.js";
 
 // Store data inside the project folder (build/../data), not the current
 // working directory, because MCP clients may start the server from anywhere.
 const PROJECT_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data");
 const DATA_FILE = path.join(DATA_DIR, "applications.json");
-
-const STATUSES = ["applied", "replied", "interview", "rejected", "offer"] as const;
-type Status = (typeof STATUSES)[number];
-
-interface Application {
-  id: number;
-  company: string;
-  role: string;
-  platform: string;
-  url?: string;
-  notes?: string;
-  status: Status;
-  appliedAt: string;
-}
 
 // Read all applications, creating an empty data file on first use
 async function loadApplications(): Promise<Application[]> {
@@ -59,21 +53,6 @@ function formatApplication(app: Application): string {
   ].join("\n");
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-// Whole days between an ISO date and now
-function daysSince(isoDate: string): number {
-  return Math.floor((Date.now() - new Date(isoDate).getTime()) / MS_PER_DAY);
-}
-
-// Today's date as YYYY-MM-DD in the computer's local time zone
-function todayLocalDate(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-}
-
 // Build a server instance and register its tools. serveStdio calls this
 // whenever it needs an instance, so every call must return a fresh one.
 function createServer() {
@@ -95,9 +74,7 @@ function createServer() {
           .describe("Where you applied (e.g. LinkedIn, Upwork, Rozee)"),
         url: z.string().optional().describe("Link to the job posting"),
         notes: z.string().optional().describe("Any extra notes"),
-        applied_date: z.iso
-          .date({ error: "Use YYYY-MM-DD with a real date", abort: true })
-          .refine((date) => date <= todayLocalDate(), "Date cannot be in the future")
+        applied_date: appliedDateSchema
           .optional()
           .describe("Date you applied, YYYY-MM-DD (default today)"),
       }),
@@ -168,8 +145,7 @@ function createServer() {
         };
       }
 
-      // Newest first (highest ID), then keep only the first `limit`
-      const shown = [...matching].sort((a, b) => b.id - a.id).slice(0, limit);
+      const shown = newestFirst(matching, limit);
 
       const heading = status
         ? `Applications with status "${status}" (${matching.length}):`
@@ -246,9 +222,7 @@ function createServer() {
     },
     async ({ days }) => {
       const applications = await loadApplications();
-      const due = applications.filter(
-        (app) => app.status === "applied" && daysSince(app.appliedAt) > days,
-      );
+      const due = followupsDue(applications, days);
 
       if (due.length === 0) {
         return {
