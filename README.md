@@ -75,6 +75,24 @@ On macOS the config file is at `~/Library/Application Support/Claude/claude_desk
 
 If the tools do not show up, check the log files in `%APPDATA%\Claude\logs` on Windows or `~/Library/Logs/Claude` on macOS.
 
+## Connect to Claude Code
+
+macOS or Linux:
+
+```bash
+claude mcp add --scope user job-tracker -- node /path/to/mcp-job-tracker/build/index.js
+```
+
+Windows (PowerShell or Command Prompt):
+
+```powershell
+claude mcp add --scope user job-tracker -- node "C:\path\to\mcp-job-tracker\build\index.js"
+```
+
+- `--scope user` makes the server available in all your projects. Without it, the default scope `local` adds it to the current project only.
+- Everything after `--` is the command that starts the server. On the command line, use normal single backslashes. Claude Code writes them correctly into its own config.
+- To check it, run `claude mcp list`. It should show `job-tracker` as Connected. Inside Claude Code, `/mcp` shows the server status.
+
 ## Example prompts
 
 - "Add a job application: Frontend Developer at Acme Corp on LinkedIn, link https://example.com/jobs/123."
@@ -100,6 +118,9 @@ mcp-job-tracker/
   .github/
     workflows/
       ci.yml            GitHub Actions: build and test on every push and pull request
+  skill/
+    job-tracker/
+      SKILL.md          Agent Skill: tells an AI agent when and how to use the tools
   src/
     index.ts            Server code: storage helpers and the 4 tools
     lib.ts              Pure helpers: date check, follow-up filter, newest-first sorting
@@ -114,6 +135,13 @@ mcp-job-tracker/
   tsconfig.json         TypeScript compiler settings
   README.md
 ```
+
+## Agent Skill
+
+The folder `skill/job-tracker/` contains an [Agent Skill](https://agentskills.io). Its `SKILL.md` tells an AI agent when to use the four tools and how, with setup steps and example conversations. The skill only contains instructions, so the MCP server must still be installed and connected as described above.
+
+- Claude Code: copy the `job-tracker` folder to `~/.claude/skills/` to use it in all projects, or to `.claude/skills/` inside one project.
+- Claude apps: zip the `job-tracker` folder and upload it under Customize > Skills. Skills need code execution to be turned on.
 
 ## Development
 
